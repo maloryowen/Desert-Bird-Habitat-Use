@@ -1,0 +1,184 @@
+---
+title: "Desert Bird Habitat Use"
+author: "Malory Owen & Christopher Lortie"
+date: "2019"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r, libraries, include=FALSE}
+library(ggplot2)
+library(ggmap)
+library(dplyr)
+library(ggpubr)
+library(tidyr)
+library(vegan)
+
+register_google(key="")
+```
+
+Here, we are examining bird habitat use as it relates to different metrics for diversity (acutal and functional) in a low-anthropogenic-impact, well preserved desert space. 
+
+##Data
+```{r, data}
+spring.site <- read.csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects_flower.csv")
+
+summer.site <- read.csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects_fruit.csv")
+
+site <- read.csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects.csv")
+head(site)
+
+#summary stats
+unique(site$species)
+#49 unique species
+unique(site$behavior)
+#15 unique behaviors
+unique(site$mesohabitat)
+#12 unique mesohabitats
+
+#Alternate dataset that only include bird visuals
+site_visuals <- na.omit(site)
+
+#summary stats
+unique(site_visuals$species)
+#49 unique species
+unique(site_visuals$behavior)
+#15 unique behaviors
+unique(site_visuals$mesohabitat)
+#12 unique mesohabitats
+#counts are the same for visuals versus no visuals
+```
+
+##Viz
+###Maps
+```{r, map, warning=FALSE}
+#map of all bird sitings
+deep.sunset <- get_map(location = c(lon = -115.663, lat = 34.7805), zoom = 17, color="bw")
+
+site.wide.map <- ggmap(deep.sunset)
+site.wide.map <- site.wide.map +
+  geom_point(data=site, aes(x=lon, y=lat, colour = family, group = family), alpha = 3/10, size =4) +
+  labs(title = "Site Wide Species Observations", x = "longitude", y = "latitude", color = "Family")
+site.wide.map
+```
+
+###Histograms
+```{r, Histograms, warning=FALSE}
+
+#histogram of bird behaviors
+behav <- ggplot(site, aes(x=behavior)) + 
+  geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+#lump into smaller groups 
+bbehav <- ggplot(site, aes(x=broad_behavior)) + 
+  geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust =1))
+
+#histogram of bird mesohabitats
+meso <- ggplot(site, aes(x=mesohabitat)) + 
+  geom_bar() + facet_grid(.~season) + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+meso
+#histogram of bird mesohabitat heights
+meso.h <- ggplot(site, aes(x=mesohabitat_height)) + 
+  geom_bar() + facet_grid(.~season) + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+meso.h #only took mesohabitat height as metric for second field season
+
+#histogram of bird species
+species <- ggplot(site, aes(x=species)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+#lump into broader taxa and functional groups
+order <- ggplot(site, aes(x=order)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+family <- ggplot(site, aes(x=family)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+#histogram of bird distance from transect
+dist <- ggplot(site, aes(x=distance)) + geom_bar() 
+
+#histogram of bird behaviors
+behavv <- ggplot(site_visuals, aes(x=behavior)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+#lump into smaller groups 
+bbehavv <- ggplot(site_visuals, aes(x=broad_behavior)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust =1))
+
+#histogram of bird species
+speciesv <- ggplot(site_visuals, aes(x=species)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+#lump into broader taxa and functional groups
+orderv <- ggplot(site_visuals, aes(x=order)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+familyv <- ggplot(site_visuals, aes(x=family)) + geom_bar() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+#histogram of bird distance from transect
+distv <- ggplot(site_visuals, aes(x=distance)) + geom_bar() 
+
+#put together on one plot for side-by-side comparison
+
+#taxanomic grid
+tax <- ggarrange(species, speciesv, family, familyv, order, orderv,
+                    labels = c("All", "Visuals", "All", "Visuals", "All", "Visuals"),
+                    ncol = 2, nrow = 3)
+#difficult to view in grid arrangement, so let's just view
+species
+speciesv
+family
+familyv
+order
+orderv
+
+#behavior grid
+bhv <- ggarrange(behav, behavv, bbehav, bbehavv,
+                   labels = c("All","Visuals", "All", "Visuals"),
+                   ncol = 2, nrow = 2)
+bhv
+
+
+#distance grid
+distance <- ggarrange(dist, distv,
+                      labels = c("All", "Visuals"),
+                      ncol = 1, nrow =2)
+distance
+
+```
+
+##Stats
+Let's see how season (migration and breeding) impacted actual and funcitonal abundance metrics.
+
+###Abundance
+####Taxanomic differences
+```{r, taxanomic abundance tests, warning=FALSE}
+ssp.abundance <- data.frame(table(site$season, site$species))
+species.wide <- spread(ssp.abundance, Var2, Freq)
+rownames(species.wide) <- species.wide$Var1  
+species.wide$Var1 <- NULL
+chisq.test(species.wide)
+
+fam.abundance<-data.frame(table(site$season, site$family))
+fam.wide <- spread(fam.abundance, Var2, Freq)
+rownames(fam.wide) <- fam.wide$Var1
+fam.wide$Var1 <- NULL
+chisq.test(fam.wide)
+
+order.abundance <- data.frame(table(site$season, site$order))
+order.wide <- spread(order.abundance, Var2, Freq)
+rownames(order.wide) <- order.wide$Var1
+order.wide$Var1 <- NULL
+chisq.test(order.wide)
+```
+The test is significant for all taxanomic levels of actual abundance, but may not be the correct statistical test? All it tells us is there is a difference between migration and breeding seasons in regards to abundance (we know migration has higher abundance, but how so?). This is not super helpful. I wanted to do a redunancy analysis, but considering the independant factor isn't numeric, I'm not sure how to go about further. Perhaps, we should do just a t-test of Shannon-Weaver Indices? This way, we are also involving diversity, not just abundance.
+
+Additionally, I am concerned because this chi-squared test doesn't incorporate the different levels of replication.
+
+####Functional differences
+Until we figure out a more appropriate analysis, let's do the same thing for our other metric of abundance: trophic guild. 
+
+```{r, functional abundance, warning=FALSE}
+trophic.abundance <- data.frame(table(site$season, site$trophic_guild))
+trophic.wide <- spread(trophic.abundance, Var2, Freq)
+rownames(trophic.wide) <- trophic.wide$Var1  
+trophic.wide$Var1 <- NULL
+chisq.test(trophic.wide)
+
+```
+Again, we have significance for trophic abundance (X^2 = 109.83, df = 8, p < 0.0001). But I think I need some help with how to go about testing this question of differences in the bird community at different bird phenologies.
+
+###Behavior and mesohabitat 
+I'd also like to explore habitat use; specificially, do behaviors change as mesohabitats change? 
+```{r}
+
+```
+
