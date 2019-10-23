@@ -179,6 +179,25 @@ Again, we have significance for trophic abundance (X^2 = 109.83, df = 8, p < 0.0
 ###Behavior and mesohabitat 
 I'd also like to explore habitat use; specificially, do behaviors change as mesohabitats change? 
 ```{r}
+#for most fine scale behavior
+meso.behav <- data.frame(table(site$behavior, site$mesohabitat))
+meso.behav.wide <- spread(meso.behav, Var2, Freq)
+rownames(meso.behav.wide) <- meso.behav.wide$Var1  
+meso.behav.wide$Var1 <- NULL
+chisq.test(meso.behav)
 
+#for broad behavior
+meso.bbehav <- data.frame(table(site$broad_behavior, site$mesohabitat))
+meso.bbehav.wide <- spread(meso.bbehav, Var2, Freq)
+rownames(meso.bbehav.wide) <- meso.bbehav.wide$Var1  
+meso.bbehav.wide$Var1 <- NULL
+chisq.test(meso.bbehav)
+
+#for behavior at mesohabitat height
+mesoh.behav <- data.frame(table(site$behavior, site$mesohabitat_height))
+mesoh.behav.wide <- spread(mesoh.behav, Var2, Freq)
+rownames(mesoh.behav.wide) <- mesoh.behav.wide$Var1  
+mesoh.behav.wide$Var1 <- NULL
+chisq.test(mesoh.behav)
 ```
-
+Experiencing errors in Chi-squared test that I can't figure out. But, I feel like this test isn't appropriate anyways, so I'll wait to fight with this after some advice.
