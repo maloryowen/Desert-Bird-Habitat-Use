@@ -8,7 +8,7 @@ output:
     toc_float: true
 ---
 
-#Introduction
+# Introduction
 Bird community structure in an area changes with the seasons, as birds migrate in Spring to their Summer breeding grounds. During their migration, some will encounter habitats unlike their breeding grounds, allowing for unique interactions between mesohabitat structures. However, some birds are Summer residents of an area, meaning they are traveling *to* a particular area for their breeding season. Lastly, there are also birds that are year long residents, meaning they do not migrate to or from a location. We are investigating the relationship between different migratory classes of birds and the way they interact with available desert mesohabitats. 
 
 Our explanatory variables, which are all metrics for diversity, include:
@@ -57,8 +57,8 @@ register_google(key="")
 
 Here, we are examining bird habitat use as it relates to different metrics for diversity (acutal and functional) in a low-anthropogenic-impact, well preserved desert space. 
 
-#Data
-##Raw data
+# Data
+## Raw data
 
 ```{r, data, echo=FALSE, warning=FALSE}
 spring.site <- read.csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects_flower.csv")
@@ -84,7 +84,7 @@ unique(site$mesohabitat)
 
 ```
 
-##Explanatory Variables 
+## Explanatory Variables 
 
 We need to create a dataset with abundances of levels in each explantory factor per walk.
 ```{r, explanatory variables dataset, warning=FALSE, include=FALSE}
@@ -142,8 +142,9 @@ ssp.3.wide <- spread(ssp.3.long, species, Freq)
 ```
 
 
-##Aggregations
-###Difference in community between seasons
+## Aggregations
+
+### Difference in community between seasons
 
 ```{r, community season, warning=FALSE, echo=FALSE}
 #walks and species
@@ -167,7 +168,8 @@ community.season.wide <- community.season.long %>% spread(season, Freq) #incorre
 
 ```
 
-####Multiple metrics of community structure
+### Multiple metrics of community structure
+
 I'd like to see the different metrics for community structure that ecologists use, so I need to create a dataset of all of these values, with "walk" as the replication level
 ```{r, community metrics, warning=FALSE, include=FALSE}
 #covariates environmental data
@@ -215,7 +217,7 @@ colnames(cov) <- c("walk","season", "abundance", "shannon", "richness", "simpson
 ```
 
 
-##Euclidean distances
+### Euclidean distances
 ```{r, Distance Matrix, warning=FALSE, echo=FALSE}
 #distance matrix
 #needed for Distance based ordinations (NMDS, PCoA, and PO)
@@ -224,22 +226,23 @@ colnames(cov) <- c("walk","season", "abundance", "shannon", "richness", "simpson
 
 
 
-#Viz
-##Maps
+# Viz
+
+## Maps
+
 ```{r, map, warning=FALSE}
 #map of all bird sitings
 deep.sunset <- get_map(location = c(lon = -115.663, lat = 34.7805), zoom = 17, color="bw")
 
 site.wide.map <- ggmap(deep.sunset)
 site.wide.map <- site.wide.map +
-  geom_point(data=site, aes(x=lon, y=lat, colour = family, group = family), alpha = 3/10, size =4) +
-  labs(title = "Site Wide Species Observations", x = "longitude", y = "latitude", color = "Family")
+  geom_point(data=site, aes(x=lon, y=lat, colour = order, group = order), alpha = 3/10, size =4) +
+  labs(title = "Site Wide Species Observations", x = "longitude", y = "latitude", color = "Order")
 site.wide.map
 ```
 
-##Explanatory Variables
 
-###Histograms
+## Histograms
 
 ```{r, Histograms, warning=FALSE, echo=FALSE}
 #behaviors
@@ -257,17 +260,6 @@ hist.behavior
 
 
 #mesohabitats
-#Fine  mesohabitats
-hist.mesofine <- ggplot(site, aes(x=mesohabitat, fill = as.factor(season))) + 
-  geom_histogram(stat="count") + 
-  facet_grid(.~season) + 
-  scale_fill_manual(values = c("#FFF47F", "#7FB2FF")) +
-  theme_classic() + 
-  labs(x = "Mesohabitat Type", y = "Frequency of Mesohabitat") +
-  theme(legend.title = element_blank()) +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) +
-  theme(strip.text.x = element_blank()) 
-
 
 #Five level mesohabitats
 hist.mesofive <- ggplot(site, aes(x=five.mesohabitat, fill = as.factor(season))) + 
@@ -306,41 +298,71 @@ hist.mesotwo <- ggplot(site, aes(x=two.mesohabitat, fill = as.factor(season))) +
 
 
 #histogram mesohabitats 
-hist.meso <- ggarrange(hist.mesofine, hist.mesofive, hist.mesothree, hist.mesotwo, ncol=2, nrow=2) 
+hist.meso <- ggarrange(hist.mesofive, hist.mesothree, hist.mesotwo, ncol=2, nrow=2) 
 hist.meso
 
-#diversity 
-#species
-specieshist <- ggplot(site, aes(x=species)) + geom_bar() + theme_classic() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) 
-
+#diversity histograms
 #order
-orderhist <- ggplot(site, aes(x=order)) + geom_bar() +theme_classic() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) 
-
-#family
-familyhist <- ggplot(site, aes(x=family)) + geom_bar() + theme_classic() +
-  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) 
+hist.order <- ggplot(site, aes(x=order, fill = as.factor(season))) + 
+  geom_histogram(stat="count") +
+  facet_grid(.~season) +
+  scale_fill_manual(values = c("#FFF47F", "#7FB2FF")) +
+  theme_classic() + 
+  labs(x = "Order", y = "Frequency of Order") +
+  theme(legend.title = element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) +
+  theme(strip.text.x = element_blank())
 
 #trophic
-trophichist <- ggplot(site, aes(x=trophic.guild)) + theme_classic() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) 
+hist.trophic <- ggplot(site, aes(x=trophic.guild, fill = as.factor(season))) + 
+  geom_histogram(stat="count") +
+  facet_grid(.~season) +
+  scale_fill_manual(values = c("#FFF47F", "#7FB2FF")) +
+  theme_classic() + 
+  labs(x = "Trophic Guild", y = "Frequency of Trophic Guild") +
+  theme(legend.title = element_blank()) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) +
+  theme(strip.text.x = element_blank())
 
-#diversity histograms
-divhist <- ggarrange(specieshist, familyhist, orderhist, trophichist, ncol=2, nrow=2)
-divhist
+#migratory class
+hist.mig <- ggplot(site, aes(x=migratory.class, fill = as.factor(season))) + 
+  geom_histogram(stat="count") +
+  facet_grid(.~season) +
+  scale_fill_manual(values = c("#FFF47F", "#7FB2FF")) +
+  theme_classic() + 
+  labs(x = "Migratory Class", y = "Frequency of Migratory Class") +
+  theme(legend.title = element_blank()) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) +
+  theme(strip.text.x = element_blank())
+
+#diversity histograms together
+hist.div <- ggarrange(hist.trophic, hist.order, hist.mig, ncol=2, nrow=2)
+hist.div
 
 #histogram of bird distance from transect
-disthist <- ggplot(site, aes(x=distance)) + geom_bar()  + theme_classic() + 
-  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) 
-disthist
+hist.dist <- ggplot(site, aes(x=distance, fill = as.factor(season))) + 
+  geom_histogram(stat="count") +
+  facet_grid(.~season) +
+  scale_fill_manual(values = c("#FFF47F", "#7FB2FF")) +
+  theme_classic() + 
+  labs(x = "Distance", y = "Frequency of Distances") +
+  theme(legend.title = element_blank()) +
+  theme_classic() + 
+  theme(axis.text.x = element_text(angle = 60, hjust = 1, size=12)) +
+  theme(strip.text.x = element_blank())
+hist.dist
 
 ```
 
 
-##Community structure
 
-###Distributions
+## Community Structure Metrics
+
+Here we will visualize some standard metrics of community structure. These metrics include Shannon Weaver Indices, Simpson's Diversity Indices, Abudances, Richness, Evenness, and Turnover.
+
+### Distributions 
 
 ```{r, comm dist, warning=FALSE, echo=FALSE}
 abun.dist <- ggplot(cov, aes(x=abundance)) +
@@ -384,7 +406,7 @@ comm.dist
 ```
 
 
-###Boxplots
+### Boxplots of Community Structure Metrics between Seasons
 
 ```{r, boxplots, echo=FALSE, warning=FALSE}
 shan.box <- ggplot(cov, aes(x=season, y=shannon, fill = season)) +
@@ -447,10 +469,11 @@ comm.box
 ```
 
 
-#Models
+# Models
+
 Is there a difference in community structure between migration (spring) and breeding (summer) seasons?
 
-##Community Metrics 
+## Community Metrics 
 
 ```{r, comm metrics models, warning=FALSE}
 #GLMs require 0 and 1's for binary data
@@ -470,8 +493,10 @@ Is there a difference in community structure between migration (spring) and bree
 
 Let's see how season (migration and breeding) impacted actual and functional diversity metrics. 
 
-##Checking Factors and Models
-###Correlation, colinearity, and multicolinearity
+## Checking Factors and Models
+
+### Correlation, colinearity, and multicolinearity
+
 ```{r, correlation, echo=FALSE, warning=FALSE}
 #correlation matric
 e.cor <- cor(e)
@@ -483,8 +508,10 @@ corrplot(e.cor) #ignore walk and season.rep
 
 
 
-##Diversity
-###Species and three mesohabitat levels
+## Diversity
+
+### Species and three mesohabitat levels
+
 ```{r}
 #pca1 <- rda(ssp.3.wide)
 
@@ -495,7 +522,8 @@ corrplot(e.cor) #ignore walk and season.rep
 
 
 
-#####Chi-squared Tests 
+### Chi-squared Tests 
+
 We've agreed these are wrong. But for now, let's keep them accessible.
 ```{r, taxanomic abundance tests, warning=FALSE}
 ssp.abundance <- data.frame(table(site$season, site$species))
