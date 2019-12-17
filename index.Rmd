@@ -48,6 +48,8 @@ library(corrplot)
 library(distances)
 library(codyn)
 library(plyr)
+library(emmeans)
+library(lme4)
 
 register_google(key="")
 
@@ -478,14 +480,43 @@ Is there a difference in community structure between migration (spring) and bree
 ```{r, comm metrics models, warning=FALSE}
 #GLMs require 0 and 1's for binary data
 #Change "flower" and "fruit" to 0 and 1
-#cov$season <- revalue(cov$season, c("flower"="0"))
-#cov$season <- revalue(cov$season, c("fruit"="1"))
+
+#test for normality
+shapiro.test(cov$abundance) #abundance is normal
+shapiro.test(cov$shannon) #shannon is normal
+shapiro.test(cov$richness) #richness is NOT normal
+shapiro.test(cov$simpson) #simpson is normal
+shapiro.test(cov$evenness) #evenness is normal
+shapiro.test(cov$turnover) #turnover is normal
 
 
-#GLMs checking for differences between different community structure metrics
-#even.m <- glm(evenness~season, data=cov, family="binomial") ##glm for season's impact on abundance
 
-#summary(abun.m)
+#LMs and GLMs checking for differences between different community structure metrics
+#because there are only two predictor levels, we don't need to do post hoc tests
+
+abun.lm <- lm(abundance~season + (1|walk), data=cov) #lm for season's impact on abundance
+summary(abun.lm)
+#abundance is significantly higher in spring than summer (p < 0.0001)
+
+shan.lm <- lm(shannon~season + (1|walk), data=cov) #lm for season's impact on shannon diversity
+summary(shan.lm)
+#shannon diversity indices are higher in spring than in summer(p < 0.0001)
+
+rich.glm <- glm(richness~season + (1|walk), data=cov, family="poisson")
+summary(rich.glm)
+#richness is higher in spring than insummer (p < 0.0001)
+
+simp.lm <- lm(simpson~season + (1|walk), data=cov)
+summary(simp.lm)
+#simpson's diversity is higher in spring than in summer (p < 0.0001)
+
+even.lm <- lm(evenness~season + (1|walk), data=cov)
+summary(even.lm) 
+#evenness is higher in spring than in summer (p < 0.0001)
+
+turn.lm <- lm(turnover~season + (1|walk), data=cov)
+summary(even.lm)
+#turnover is lower in spring than in summer (p < 0.0001)
 
 ```
 

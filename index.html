@@ -1724,14 +1724,191 @@ site.wide.map</code></pre>
 <h2>Community Metrics</h2>
 <pre class="r"><code>#GLMs require 0 and 1&#39;s for binary data
 #Change &quot;flower&quot; and &quot;fruit&quot; to 0 and 1
-#cov$season &lt;- revalue(cov$season, c(&quot;flower&quot;=&quot;0&quot;))
-#cov$season &lt;- revalue(cov$season, c(&quot;fruit&quot;=&quot;1&quot;))
 
+#test for normality
+shapiro.test(cov$abundance) #abundance is normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  cov$abundance
+## W = 0.94597, p-value = 0.03016</code></pre>
+<pre class="r"><code>shapiro.test(cov$shannon) #shannon is normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  cov$shannon
+## W = 0.93679, p-value = 0.01349</code></pre>
+<pre class="r"><code>shapiro.test(cov$richness) #richness is NOT normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  cov$richness
+## W = 0.95738, p-value = 0.08469</code></pre>
+<pre class="r"><code>shapiro.test(cov$simpson) #simpson is normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  cov$simpson
+## W = 0.84469, p-value = 1.879e-05</code></pre>
+<pre class="r"><code>shapiro.test(cov$evenness) #evenness is normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  cov$evenness
+## W = 0.88746, p-value = 0.0005325</code></pre>
+<pre class="r"><code>shapiro.test(cov$turnover) #turnover is normal</code></pre>
+<pre><code>## 
+##  Shapiro-Wilk normality test
+## 
+## data:  cov$turnover
+## W = 0.90562, p-value = 0.001424</code></pre>
+<pre class="r"><code>#LMs and GLMs checking for differences between different community structure metrics
+#because there are only two predictor levels, we don&#39;t need to do post hoc tests
 
-#GLMs checking for differences between different community structure metrics
-#even.m &lt;- glm(evenness~season, data=cov, family=&quot;binomial&quot;) ##glm for season&#39;s impact on abundance
+abun.lm &lt;- lm(abundance~season + (1|walk), data=cov) #lm for season&#39;s impact on abundance
+summary(abun.lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = abundance ~ season + (1 | walk), data = cov)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -14.7308  -4.0082   0.2692   2.9918  21.2692 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)    20.731      1.493  13.887  &lt; 2e-16 ***
+## seasonfruit   -10.445      2.233  -4.677 2.67e-05 ***
+## 1 | walkTRUE       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 7.612 on 45 degrees of freedom
+## Multiple R-squared:  0.3271, Adjusted R-squared:  0.3121 
+## F-statistic: 21.87 on 1 and 45 DF,  p-value: 2.675e-05</code></pre>
+<pre class="r"><code>#abundance is significantly higher in spring than summer (p &lt; 0.0001)
 
-#summary(abun.m)</code></pre>
+shan.lm &lt;- lm(shannon~season + (1|walk), data=cov) #lm for season&#39;s impact on shannon diversity
+summary(shan.lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = shannon ~ season + (1 | walk), data = cov)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.87192 -0.26131  0.02425  0.26468  0.97643 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   1.86954    0.08342  22.412  &lt; 2e-16 ***
+## seasonfruit  -1.13991    0.12479  -9.135 8.19e-12 ***
+## 1 | walkTRUE       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.4253 on 45 degrees of freedom
+## Multiple R-squared:  0.6496, Adjusted R-squared:  0.6419 
+## F-statistic: 83.44 on 1 and 45 DF,  p-value: 8.191e-12</code></pre>
+<pre class="r"><code>#shannon diversity indices are higher in spring than in summer(p &lt; 0.0001)
+
+rich.glm &lt;- glm(richness~season + (1|walk), data=cov, family=&quot;poisson&quot;)
+summary(rich.glm)</code></pre>
+<pre><code>## 
+## Call:
+## glm(formula = richness ~ season + (1 | walk), family = &quot;poisson&quot;, 
+##     data = cov)
+## 
+## Deviance Residuals: 
+##     Min       1Q   Median       3Q      Max  
+## -1.4582  -0.7408  -0.1340   0.4465   2.2243  
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error z value Pr(&gt;|z|)    
+## (Intercept)   2.15800    0.06667  32.370  &lt; 2e-16 ***
+## seasonfruit  -0.98302    0.13838  -7.104 1.22e-12 ***
+## 1 | walkTRUE       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## (Dispersion parameter for poisson family taken to be 1)
+## 
+##     Null deviance: 98.827  on 46  degrees of freedom
+## Residual deviance: 40.322  on 45  degrees of freedom
+## AIC: 208.88
+## 
+## Number of Fisher Scoring iterations: 4</code></pre>
+<pre class="r"><code>#richness is higher in spring than insummer (p &lt; 0.0001)
+
+simp.lm &lt;- lm(simpson~season + (1|walk), data=cov)
+summary(simp.lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = simpson ~ season + (1 | walk), data = cov)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -0.38433 -0.07765  0.02367  0.07597  0.36567 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   0.79925    0.03516  22.729  &lt; 2e-16 ***
+## seasonfruit  -0.41491    0.05261  -7.887 5.03e-10 ***
+## 1 | walkTRUE       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1793 on 45 degrees of freedom
+## Multiple R-squared:  0.5803, Adjusted R-squared:  0.5709 
+## F-statistic: 62.21 on 1 and 45 DF,  p-value: 5.034e-10</code></pre>
+<pre class="r"><code>#simpson&#39;s diversity is higher in spring than in summer (p &lt; 0.0001)
+
+even.lm &lt;- lm(evenness~season + (1|walk), data=cov)
+summary(even.lm) </code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = evenness ~ season + (1 | walk), data = cov)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.262192 -0.058915  0.004939  0.071092  0.289983 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   0.88204    0.02337  37.735  &lt; 2e-16 ***
+## seasonfruit  -0.17203    0.03718  -4.627 3.69e-05 ***
+## 1 | walkTRUE       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1192 on 41 degrees of freedom
+##   (4 observations deleted due to missingness)
+## Multiple R-squared:  0.3431, Adjusted R-squared:  0.3271 
+## F-statistic: 21.41 on 1 and 41 DF,  p-value: 3.685e-05</code></pre>
+<pre class="r"><code>#evenness is higher in spring than in summer (p &lt; 0.0001)
+
+turn.lm &lt;- lm(turnover~season + (1|walk), data=cov)
+summary(even.lm)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = evenness ~ season + (1 | walk), data = cov)
+## 
+## Residuals:
+##       Min        1Q    Median        3Q       Max 
+## -0.262192 -0.058915  0.004939  0.071092  0.289983 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   0.88204    0.02337  37.735  &lt; 2e-16 ***
+## seasonfruit  -0.17203    0.03718  -4.627 3.69e-05 ***
+## 1 | walkTRUE       NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 0.1192 on 41 degrees of freedom
+##   (4 observations deleted due to missingness)
+## Multiple R-squared:  0.3431, Adjusted R-squared:  0.3271 
+## F-statistic: 21.41 on 1 and 41 DF,  p-value: 3.685e-05</code></pre>
+<pre class="r"><code>#turnover is lower in spring than in summer (p &lt; 0.0001)</code></pre>
 <p>Let’s see how season (migration and breeding) impacted actual and functional diversity metrics.</p>
 </div>
 <div id="checking-factors-and-models" class="section level2">
