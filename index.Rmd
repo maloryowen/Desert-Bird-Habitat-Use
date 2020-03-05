@@ -504,10 +504,6 @@ cont <- as.data.frame(table(cont1$three.mesohabitat, cont1$broad.behavior))
 cont <- cont %>% spread(Var1, Freq)
 cont <- column_to_rownames(cont, var="Var2") #ready for chi squared test
 
-#two level for mosaic graph
-cont1 <- site[,c(4, 12, 16, 18)]
-cont.2 <- as.data.frame(table(cont1$two.mesohabitat, cont1$broad.behavior))
-
 
 #spring
 cont.sp <- filter(cont1, season == "spring")
@@ -715,7 +711,10 @@ shan.box <- ggplot(cov, aes(x=season, y=shannon, fill = season)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
-  labs(y = "Shannon's Diversity")
+  labs(y = "Shannon's Diversity", x=" ") +
+   theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 abun.box <- ggplot(cov, aes(x=season, y=abundance, fill = season)) +
   geom_boxplot() +
@@ -724,7 +723,10 @@ abun.box <- ggplot(cov, aes(x=season, y=abundance, fill = season)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
-  labs(y = "Abundance")
+  labs(y = "Abundance", x=" ") +
+   theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 rich.box <- ggplot(cov, aes(x=season, y=richness, fill = season)) +
   geom_boxplot() +
@@ -733,7 +735,10 @@ rich.box <- ggplot(cov, aes(x=season, y=richness, fill = season)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
-  labs(y = "Richness")
+  labs(y = "Richness", x = " ") +
+   theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 simp.box <- ggplot(cov, aes(x=season, y=simpson, fill = season)) +
   geom_boxplot() +
@@ -742,7 +747,10 @@ simp.box <- ggplot(cov, aes(x=season, y=simpson, fill = season)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
-  labs(y = "Simpson's Diversity")
+  labs(y = "Simpson's Diversity", x = " ") +
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())
 
 even.box <- ggplot(cov, aes(x=season, y=evenness, fill = season)) +
   geom_boxplot() +
@@ -767,7 +775,7 @@ comm.box
 
 ```
 
-##Bargraphs of Mesohabitat and Behavioral frequency
+####Bargraphs of Mesohabitat and Behavioral species frequency
 ```{r, behavioral boxplot, echo=FALSE}
 #mesohabitat 
 #three level
@@ -789,12 +797,14 @@ meso.ssp.bar.3 <- ggplot(meso.ssp.summary.3, aes(x=mesohabitat, y=mean, fill=rn,
   geom_bar(stat = "summary", position = "dodge") +
   geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
   theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(axis.title.x=element_blank()) +
   theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
-  labs(y = "Frequency") +
-  theme(legend.title = element_blank()) 
+  labs(title = "A", y = "Mean Frequency") +
+  theme(legend.title = element_blank()) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
 meso.ssp.bar.3
 
 #two level
@@ -807,21 +817,22 @@ meso.ssp.summary.2 <- setDT(meso.ssp.summary.2, keep.rownames = TRUE)[]
 
 meso.ssp.summary.2 <- separate(meso.ssp.summary.2, rn, 'mesohabitat', sep = " ", remove = FALSE)
 
-meso.ssp.summary.2$rn <-  gsub('cactus ', ' ', meso.ssp.summary.3$rn)
-meso.ssp.summary.2$rn <-  gsub('shrub ', ' ', meso.ssp.summary.3$rn)
-meso.ssp.summary.2$rn <-  gsub('other ', ' ', meso.ssp.summary.3$rn)
+meso.ssp.summary.2$rn <-  gsub('non-vegetative ', ' ', meso.ssp.summary.2$rn)
+meso.ssp.summary.2$rn <-  gsub('vegetative ', ' ', meso.ssp.summary.2$rn)
 
-meso.ssp.bar.3 <- ggplot(meso.ssp.summary.2, aes(x=mesohabitat, y=mean, fill=rn, position_dodge())) +
+meso.ssp.bar.2 <- ggplot(meso.ssp.summary.2, aes(x=mesohabitat, y=mean, fill=rn, position_dodge())) +
   geom_bar(stat = "summary", position = "dodge") +
   geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
   theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(axis.title.x=element_blank()) +
   theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
-  labs(y = "Frequency") +
-  theme(legend.title = element_blank()) 
-meso.ssp.bar.3
+  labs(y = "Mean Frequency") +
+  theme(legend.title = element_blank()) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+meso.ssp.bar.2
 
 #behavior
 beha.ssp.summary <- data.frame(
@@ -839,19 +850,214 @@ beha.ssp.summary$rn <-  gsub('Feeding ', ' ', beha.ssp.summary$rn)
 beha.ssp.summary$rn <-  gsub('Inactivity ', ' ', beha.ssp.summary$rn)
 beha.ssp.summary$rn <-  gsub('Territorial/mating ', ' ', beha.ssp.summary$rn)
 
-beha.bar <- ggplot(beha.ssp.summary, aes(x=behavior, y=mean, fill=rn, position_dodge())) +
+beha.ssp.bar <- ggplot(beha.ssp.summary, aes(x=behavior, y=mean, fill=rn, position_dodge())) +
   geom_bar(stat = "summary", position = "dodge") +
   geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
   theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(legend.title = element_blank()) +
   theme(axis.title.x=element_blank()) +
   theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
-  labs(y = "Frequency")
-beha.bar
+  labs(y = "Mean Frequency") +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+beha.ssp.bar
 
+
+ssp.bar <- ggarrange(meso.ssp.bar.3, meso.ssp.bar.2, beha.ssp.bar, nrow=3, ncol=1)
 ```
+
+####Bar graphs of mesohabitat and behavior frequency trophic guild
+```{r, behavioral boxplot, echo=FALSE}
+#mesohabitat 
+#three level
+meso.tro.summary.3 <- data.frame(
+    mean=tapply(meso.tro.long.3$Freq, meso.tro.long.3$meso, mean),
+    n=tapply(meso.tro.long.3$Freq, meso.tro.long.3$meso, length),
+    sd=tapply(meso.tro.long.3$Freq, meso.tro.long.3$meso, sd)
+    )
+meso.tro.summary.3 <- setDT(meso.tro.summary.3, keep.rownames = TRUE)[]
+
+meso.tro.summary.3 <- separate(meso.tro.summary.3, rn, 'mesohabitat', sep = " ", remove = FALSE)
+
+meso.tro.summary.3$rn <-  gsub('cactus ', ' ', meso.tro.summary.3$rn)
+meso.tro.summary.3$rn <-  gsub('shrub ', ' ', meso.tro.summary.3$rn)
+meso.tro.summary.3$rn <-  gsub('other ', ' ', meso.tro.summary.3$rn)
+
+
+meso.tro.bar.3 <- ggplot(meso.tro.summary.3, aes(x=mesohabitat, y=mean, fill=rn, position_dodge())) +
+  geom_bar(stat = "summary", position = "dodge") +
+  geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
+  labs(title = "B") +
+  theme(legend.title = element_blank())  +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+meso.tro.bar.3
+
+#two level
+meso.tro.summary.2 <- data.frame(
+    mean=tapply(meso.tro.long.2$Freq, meso.tro.long.2$meso, mean),
+    n=tapply(meso.tro.long.2$Freq, meso.tro.long.2$meso, length),
+    sd=tapply(meso.tro.long.2$Freq, meso.tro.long.2$meso, sd)
+    )
+meso.tro.summary.2 <- setDT(meso.tro.summary.2, keep.rownames = TRUE)[]
+
+meso.tro.summary.2 <- separate(meso.tro.summary.2, rn, 'mesohabitat', sep = " ", remove = FALSE)
+
+meso.tro.summary.2$rn <-  gsub('vegetative ', ' ', meso.tro.summary.2$rn)
+meso.tro.summary.2$rn <-  gsub('non-vegetative ', ' ', meso.tro.summary.2$rn)
+
+meso.tro.bar.2 <- ggplot(meso.tro.summary.2, aes(x=mesohabitat, y=mean, fill=rn, position_dodge())) +
+  geom_bar(stat = "summary", position = "dodge") +
+  geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7", "#FFB64C", "#B1E7C7")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
+  labs(y = " ") +
+  theme(legend.title = element_blank()) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+meso.tro.bar.2
+
+#behavior
+beha.tro.summary <- data.frame(
+    mean=tapply(beha.tro.long$Freq, beha.tro.long$behavior, mean),
+    n=tapply(beha.tro.long$Freq, beha.tro.long$behavior, length),
+    sd=tapply(beha.tro.long$Freq, beha.tro.long$behavior, sd)
+    )
+beha.tro.summary <- setDT(beha.tro.summary, keep.rownames = TRUE)[]
+
+beha.tro.summary <- separate(beha.tro.summary, rn, 'behavior', sep = " ", remove = FALSE)
+
+beha.tro.summary$rn <-  gsub('Active movement ', ' ', beha.tro.summary$rn)
+beha.tro.summary$rn <-  gsub('Cleaning ', ' ', beha.tro.summary$rn)
+beha.tro.summary$rn <-  gsub('Feeding ', ' ', beha.tro.summary$rn)
+beha.tro.summary$rn <-  gsub('Inactivity ', ' ', beha.tro.summary$rn)
+beha.tro.summary$rn <-  gsub('Territorial/mating ', ' ', beha.tro.summary$rn)
+
+beha.tro.bar <- ggplot(beha.tro.summary, aes(x=behavior, y=mean, fill=rn, position_dodge())) +
+  geom_bar(stat = "summary", position = "dodge") +
+  geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme(legend.title = element_blank()) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
+  labs(y = " ") +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+beha.tro.bar
+
+
+tro.bar <- ggarrange(meso.tro.bar.3, meso.tro.bar.2, beha.tro.bar, nrow=3, ncol=1)
+```
+
+
+####Bar graphs of mesohabitat and behavior frequency migratory class
+```{r, behavioral boxplot, echo=FALSE}
+#mesohabitat 
+#three level
+meso.mig.summary.3 <- data.frame(
+    mean=tapply(meso.mig.long.3$Freq, meso.mig.long.3$meso, mean),
+    n=tapply(meso.mig.long.3$Freq, meso.mig.long.3$meso, length),
+    sd=tapply(meso.mig.long.3$Freq, meso.mig.long.3$meso, sd)
+    )
+meso.mig.summary.3 <- setDT(meso.mig.summary.3, keep.rownames = TRUE)[]
+
+meso.mig.summary.3 <- separate(meso.mig.summary.3, rn, 'mesohabitat', sep = " ", remove = FALSE)
+
+meso.mig.summary.3$rn <-  gsub('cactus ', ' ', meso.mig.summary.3$rn)
+meso.mig.summary.3$rn <-  gsub('shrub ', ' ', meso.mig.summary.3$rn)
+meso.mig.summary.3$rn <-  gsub('other ', ' ', meso.mig.summary.3$rn)
+
+
+meso.mig.bar.3 <- ggplot(meso.mig.summary.3, aes(x=mesohabitat, y=mean, fill=rn, position_dodge())) +
+  geom_bar(stat = "summary", position = "dodge") +
+  geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
+  labs(title = "C", y=" ") +
+  theme(legend.title = element_blank()) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+meso.mig.bar.3
+
+#two level
+meso.mig.summary.2 <- data.frame(
+    mean=tapply(meso.mig.long.2$Freq, meso.mig.long.2$meso, mean),
+    n=tapply(meso.mig.long.2$Freq, meso.mig.long.2$meso, length),
+    sd=tapply(meso.mig.long.2$Freq, meso.mig.long.2$meso, sd)
+    )
+meso.mig.summary.2 <- setDT(meso.mig.summary.2, keep.rownames = TRUE)[]
+
+meso.mig.summary.2 <- separate(meso.mig.summary.2, rn, 'mesohabitat', sep = " ", remove = FALSE)
+
+meso.mig.summary.2$rn <-  gsub('non-vegetative ', ' ', meso.mig.summary.2$rn)
+meso.mig.summary.2$rn <-  gsub('vegetative ', ' ', meso.mig.summary.2$rn)
+
+meso.mig.bar.2 <- ggplot(meso.mig.summary.2, aes(x=mesohabitat, y=mean, fill=rn, position_dodge())) +
+  geom_bar(stat = "summary", position = "dodge") +
+  geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
+  theme_classic() +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
+  theme(legend.title = element_blank()) + 
+  labs(y=' ') +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+meso.mig.bar.2
+
+#behavior
+beha.mig.summary <- data.frame(
+    mean=tapply(beha.mig.long$Freq, beha.mig.long$behavior, mean),
+    n=tapply(beha.mig.long$Freq, beha.mig.long$behavior, length),
+    sd=tapply(beha.mig.long$Freq, beha.mig.long$behavior, sd)
+    )
+beha.mig.summary <- setDT(beha.mig.summary, keep.rownames = TRUE)[]
+
+beha.mig.summary <- separate(beha.mig.summary, rn, 'behavior', sep = " ", remove = FALSE)
+
+beha.mig.summary$rn <-  gsub('Active movement ', ' ', beha.mig.summary$rn)
+beha.mig.summary$rn <-  gsub('Cleaning ', ' ', beha.mig.summary$rn)
+beha.mig.summary$rn <-  gsub('Feeding ', ' ', beha.mig.summary$rn)
+beha.mig.summary$rn <-  gsub('Inactivity ', ' ', beha.mig.summary$rn)
+beha.mig.summary$rn <-  gsub('Territorial/mating ', ' ', beha.mig.summary$rn)
+
+beha.mig.bar <- ggplot(beha.mig.summary, aes(x=behavior, y=mean, fill=rn, position_dodge())) +
+  geom_bar(stat = "summary", position = "dodge") +
+  geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme(legend.title = element_blank()) +
+  theme(axis.title.x=element_blank()) +
+  theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
+  labs(y=" ") +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+beha.mig.bar
+
+
+mig.bar <- ggarrange(meso.mig.bar.3, meso.mig.bar.2, beha.mig.bar, nrow=3, ncol=1)
+
+ssp.fun.bar <- ggarrange(ssp.bar, tro.bar, mig.bar, nrow=1, ncol=3)
+ssp.fun.bar
+```
+
+
 
 ###Mesohabitat's influence on Behavior
 
@@ -860,28 +1066,36 @@ beha.bar
 #Chi-squared results can be visualized with mosiac plots
 
 library(ggmosaic)
+#three level
+cont1 <- site[,c(4, 12, 16, 19)]
+cont <- as.data.frame(table(cont1$three.mesohabitat, cont1$broad.behavior))
+#two level for mosaic graph
+cont1 <- site[,c(4, 12, 16, 18)]
+cont.2 <- as.data.frame(table(cont1$two.mesohabitat, cont1$broad.behavior))
 
 #three-level mesohabitat
-ggplot(data = cont) +
+mos3 <- ggplot(data = cont) +
   geom_mosaic(aes(weight=Freq, x = product(Var2), fill = Var1)) +
   theme_classic() +
   theme(text = element_text(size=20), axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
-  labs(x = "Behavior Type", y = "Mesohabitat") +
+  labs(title = "A", x = " ", y = "Mesohabitat") +
   theme(legend.title = element_blank()) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7", "#F4CFF8")) 
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7", "#F4CFF8")) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
 
 #two-level mesohabitat
-ggplot(data = cont.2) +
+mos2 <- ggplot(data = cont.2) +
   geom_mosaic(aes(weight=Freq, x = product(Var2), fill = Var1)) +
   theme_classic() +
   theme(text = element_text(size=20), axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
-  labs(x = "Behavior Type", y = "Mesohabitat") +
+  labs(title = "B", x = "Behavior Type", y = "Mesohabitat") +
   theme(legend.title = element_blank()) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) 
+  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
   
 
-
-
+mosaic.plot <- ggarrange(mos3, mos2, nrow=2, ncol=1)
+mosaic.plot
 
 ```
 
@@ -1288,7 +1502,7 @@ Then migratory classes.
 ddply(beha.mig.long,.(behavior),colwise(mean))
 ddply(beha.mig.long,.(behavior),colwise(sd))
 #ANOVA on the broad behavior
-behavior.aov <- aov(Freq ~ behavior, data = beha.tro.long)
+behavior.aov <- aov(Freq ~ behavior, data = beha.mig.long)
 summary(behavior.aov) #significant, but perhaps way too many 
 #posthoc test
 TukeyHSD(behavior.aov, conf.level=0.95)
