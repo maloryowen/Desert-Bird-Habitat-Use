@@ -176,6 +176,7 @@ ssp.3.wide <- spread(ssp.3.long, species, Freq)
 #walks and species
 walks.ssp <- site[,c(4, 5, 12)] #pull season, walk, and species
 walks.ssp.long <-  as.data.frame(table(walks.ssp)) #get freq of each species in long table with walks as rep
+write.csv(walks.ssp.long,"~/Masters/Desert-Bird-Habitat-Use/output_data/walks.ssp.long.csv", row.names = FALSE) #write to csv
 walks.ssp.wide <- walks.ssp.long %>% spread(species, Freq) #get species into wide format
 walks.ssp.wide$walk <- as.numeric(walks.ssp.wide$walk) #make walks numeric
 walks.ssp.wide <- filter(walks.ssp.wide, (season == "spring" & walk < 27) | (season == "summer" & walk > 26)) #filter so only 1-26 of springing season and 27-47 for summering season are present
@@ -268,20 +269,22 @@ First, let's make a 3-level mesohabitat
 ```{r, community differences at mesohabitat 3 level, warning=FALSE}
 #for both seasons
 #mesos and species
-meso.ssp <- site[,c(4, 19, 12)] #pull season, mesohabitat, and species
+meso.ssp <- site[,c(4, 5, 19, 12)] #pull season, mesohabitat, and species
 meso.ssp.long.3 <-  as.data.frame(table(meso.ssp)) #get freq of each species in long table with
 meso.ssp.long.3 <- mutate(meso.ssp.long.3, meso = paste(three.mesohabitat, season))
 meso.ssp.long.3$three.mesohabitat <- NULL
+write.csv(meso.ssp.long.3,"~/Masters/Desert-Bird-Habitat-Use/output_data/meso.ssp.long.3.csv", row.names = FALSE)
+
 
 meso3 <- meso.ssp.long.3 %>% spread(meso, Freq) #data can be used in an ANoVA
 
 #for just spring
-meso.ssp <- site[,c(4, 19, 12)] #pull season, mesohabitat, and species
+meso.ssp <- site[,c(4, 5, 19, 12)] #pull season, mesohabitat, and species
 meso.ssp.long.3.sp <-  as.data.frame(table(meso.ssp))
 meso.ssp.long.3.sp <- filter(meso.ssp.long.3.sp, season == "spring")
 
 #for just summer
-meso.ssp <- site[,c(4, 19, 12)] #pull season, mesohabitat, and species
+meso.ssp <- site[,c(4, 5, 19, 12)] #pull season, mesohabitat, and species
 meso.ssp.long.3.su <-  as.data.frame(table(meso.ssp))
 meso.ssp.long.3.su <- filter(meso.ssp.long.3.su, season == "summer")
 
@@ -292,10 +295,11 @@ Next, let's prepare the data for when we check and see if the number of levels o
 ```{r, community difference a mesohabitat 2 level, warning=FALSE, echo=FALSE}
 
 #mesos and species
-meso.ssp <- site[,c(4, 18, 12)] #pull season, mesohabitat, and species
+meso.ssp <- site[,c(4, 5, 18, 12)] #pull season, mesohabitat, and species
 meso.ssp.long.2 <-  as.data.frame(table(meso.ssp)) #get freq of each species in long table with
 meso.ssp.long.2 <- mutate(meso.ssp.long.2, meso = paste(two.mesohabitat, season))
 meso.ssp.long.2$two.mesohabitat <- NULL
+write.csv(meso.ssp.long.2,"~/Masters/Desert-Bird-Habitat-Use/output_data/meso.ssp.long.2.csv", row.names = FALSE)
 
 meso2 <- meso.ssp.long.2 %>% spread(meso, Freq) #data can be used in an ANoVA
 
@@ -317,11 +321,14 @@ meso.ssp.long.2.su <- filter(meso.ssp.long.2.su, season == "summer")
 
 #broad behavior and species
 #both seasons together
-beha.ssp <- site[,c(4, 16, 12)] #pull season, broad behavior, and species
+beha.ssp <- site[,c(4, 5, 16, 12)] #pull season, broad behavior, and species
 beha.ssp.long.4box <-  as.data.frame(table(beha.ssp)) #get freq of each species in long table with
 beha.ssp.long <- mutate(beha.ssp.long.4box, behavior = paste(broad.behavior, season))
  #combine behavior type and season so that distinct variables
 beha.ssp.long$broad.behavior <- NULL
+write.csv(beha.ssp.long,"~/Masters/Desert-Bird-Habitat-Use/output_data/beha.ssp.long.csv", row.names = FALSE)
+
+
 
 behavior <- beha.ssp.long %>% spread(behavior, Freq) #data can be used in an ANoVA
 
@@ -350,11 +357,13 @@ First, let's make a 3-level mesohabitat
 ```{r, community differences at mesohabitat 3 level, warning=FALSE}
 #for both seasons
 #mesos and tropic guilds
-meso.tro <- site[,c(4, 19, 14)] #pull season, mesohabitat, and species
+meso.tro <- site[,c(4, 5, 19, 14)] #pull season, mesohabitat, and species
 meso.tro.long.3 <-  as.data.frame(table(meso.tro)) #get freq of each species in long table with
 meso.tro.long.3 <- mutate(meso.tro.long.3, meso = paste(three.mesohabitat, season))
 meso.tro.long.3$season <- NULL #combine mesohabitat and season so that distinct variables
 meso.tro.long.3$three.mesohabitat <- NULL
+write.csv(meso.tro.long.3,"~/Masters/Desert-Bird-Habitat-Use/output_data/meso.tro.long.csv", row.names = FALSE)
+
 
 meso3 <- meso.tro.long.3 %>% spread(meso, Freq) #data can be used in an ANoVA
 
@@ -400,11 +409,14 @@ First, let's make a 3-level mesohabitat
 ```{r, community differences at mesohabitat 3 level, warning=FALSE}
 #for both seasons
 #mesos and migratory classes
-meso.mig <- site[,c(4, 19, 13)] #pull season, mesohabitat, and migratory class
+meso.mig <- site[,c(4, 5, 19, 13)] #pull season, mesohabitat, and migratory class
 meso.mig.long.3 <-  as.data.frame(table(meso.mig)) #get freq of each mig class in long table with
 meso.mig.long.3 <- mutate(meso.mig.long.3, meso = paste(three.mesohabitat, season))
 meso.mig.long.3$season <- NULL #combine mesohabitat and season so that distinct variables
 meso.mig.long.3$three.mesohabitat <- NULL
+write.csv(meso.mig.long,"~/Masters/Desert-Bird-Habitat-Use/output_data/meso.mig.long.csv", row.names = FALSE)
+
+
 
 meso3 <- meso.mig.long.3 %>% spread(meso, Freq) #data can be used in an ANoVA
 
@@ -450,11 +462,13 @@ meso.mig.long.2.su <- filter(meso.mig.long.2.su, season == "summer")
 ### Difference in behavior between seasons 
 ####Trophic Guilds
 ```{r, trophic guild data, warning=FALSE, include=FALSE}
-beha.tro <- site[,c(4, 16, 14)] #pull season, mesohabitat, and trophic guild
+beha.tro <- site[,c(4, 5, 16, 14)] #pull season, mesohabitat, and trophic guild
 beha.tro.long.4box <-  as.data.frame(table(beha.tro)) #get freq of each trophic guild in long table with
 beha.tro.long <- mutate(beha.tro.long.4box, behavior = paste(broad.behavior, season))
 beha.tro.long$season <- NULL #combine mesohabitat and season so that distinct variables
 beha.tro.long$broad.behavior <- NULL
+write.csv(beha.tro.long,"~/Masters/Desert-Bird-Habitat-Use/output_data/beha.tro.long.csv", row.names = FALSE)
+
 
 behavior <- beha.tro.long %>% spread(behavior, Freq) #data can be used in an ANoVA
 
@@ -473,11 +487,13 @@ beha.tro.long.su <- filter(beha.tro.long.su, season == "summer")
 
 ####Migratory Classes
 ```{r, trophic guild data, warning=FALSE, include=FALSE}
-beha.mig <- site[,c(4, 16, 13)] #pull season, mesohabitat, and trophic guild
+beha.mig <- site[,c(4, 5, 16, 13)] #pull season, mesohabitat, and trophic guild
 beha.mig.long.4box <-  as.data.frame(table(beha.mig)) #get freq of each trophic guild in long table with
 beha.mig.long <- mutate(beha.mig.long.4box, behavior = paste(broad.behavior, season))
 beha.mig.long$season <- NULL #combine mesohabitat and season so that distinct variables
 beha.mig.long$broad.behavior <- NULL
+write.csv(beha.mig.long,"~/Masters/Desert-Bird-Habitat-Use/output_data/beha.mig.long.csv", row.names = FALSE)
+
 
 behavior <- beha.mig.long %>% spread(behavior, Freq) #data can be used in an ANoVA
 
