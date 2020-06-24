@@ -41,24 +41,20 @@ library(ggmap)
 library(dplyr)
 library(ggpubr)
 library(tidyverse)
-library(tidyr)
 library(vegan)
 library(corrplot)
 library(distances)
 library(codyn)
-library(plyr)
 library(emmeans)
 library(lme4)
 library(devtools)
-library(factoextra)
 library(data.table)
 library(MASS)
 library(chisq.posthoc.test)
 
 
 
-
-register_google(key="AIzaSyC3izk0qKmEBZf5hx0tVUwx-bqxi8TVY5Q")
+register_google(key="AIzaSyCxOqL_DUpsATBPdDa8HzpWdlIx_wHiSlk")
 
 
 ```
@@ -81,6 +77,8 @@ site.all <- read.csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects.csv"
 site <- read.csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects_viz.csv")
 head(site)
 
+nrow(site[site$season == "summer",])
+
 #summary stats
 #taxonomy
 unique(site$species)
@@ -95,13 +93,16 @@ unique(site$mesohabitat)
 
 ###Exploration
 ```{r, EDA, include=FALSE}
-season.ssp <- site[,c(4, 12)] #pull season and species
+season.ssp <- site %>% 
+  dplyr::select(season, species) #pull season and species
 season.ssp <- as.data.frame(table(season.ssp)) #freq of species in each season
 
-season.tro <- site[,c(4, 14)] #pull season and trophic guild
+season.tro <- site %>% 
+  dplyr::select(season, trophic.guild) #pull season and trophic guild
 season.tro <- as.data.frame(table(season.tro))
 
-season.mig <- site[,c(4, 13)] #pull season and migratory class
+season.mig <- site %>% 
+  dplyr::select(season, migratory.class) #pull season and migratory class
 season.mig <- as.data.frame(table(season.mig))
 
 
@@ -115,7 +116,8 @@ We need to create a dataset with abundances of levels in each explantory factor 
 #get count data for each explanatory variable
 
 #species richness
-species.rich <- site[,c(5, 12)] #pull season, walk, and species
+species.rich <- site %>% 
+  dplyr::select(season, walk, species)#pull season, walk, and species
 species.rich.long <-  as.data.frame(table(species.rich)) #get freq of each species in long table with walks as rep
 species.rich.long$walk <- as.numeric(species.rich.long$walk)
 species.rich.wide <- species.rich.long %>% spread(species, Freq) #get into wide format
@@ -123,7 +125,8 @@ species.rich.wide$walk <- NULL
 species.rich <- as.data.frame(specnumber(species.rich.wide)) #species richness at walk level 
  
 #family richness
-family.rich <- site[,c(5, 11)] #pull walk, and family 
+family.rich <- site %>% 
+  dplyr::select(walk, family)#pull walk, and family 
 family.rich.long <-  as.data.frame(table(family.rich)) #get freq of each species in long table with walks as rep
 family.rich.long$walk <- as.numeric(family.rich.long$walk)
 family.rich.wide <- family.rich.long %>% spread(family, Freq) #get into wide format
@@ -131,7 +134,8 @@ family.rich.wide$walk <- NULL
 family.rich <- as.data.frame(specnumber(family.rich.wide)) #species richness at walk level 
 
 #order richness
-order.rich <- site[,c(5, 10)] #pull walk, and order
+order.rich <- site %>% 
+  dplyr::select(walk, order)#pull walk, and order
 order.rich.long <-  as.data.frame(table(order.rich)) #get freq of each species in long table with walks as rep
 order.rich.long$walk <- as.numeric(order.rich.long$walk)
 order.rich.wide <- order.rich.long %>% spread(order, Freq) #get into wide format
@@ -139,7 +143,8 @@ order.rich.wide$walk <- NULL
 order.rich <- as.data.frame(specnumber(order.rich.wide)) #species richness at walk level 
 
 #trophic guild richness
-trophic.rich <- site[,c(5, 14)] #pull walk, and trophic guild
+trophic.rich <- site %>% 
+  dplyr::select(walk, trophic.guild)#pull walk, and trophic guild
 trophic.rich.long <-  as.data.frame(table(trophic.rich)) #get freq of each species in long table with walks as rep
 trophic.rich.long$walk <- as.numeric(trophic.rich.long$walk)
 trophic.rich.wide <- trophic.rich.long %>% spread(trophic.guild, Freq) #get into wide format
@@ -154,9 +159,11 @@ colnames(e) <- c("species", "family", "order", "trophic guild")
 
 
 #simplifed dataframe with species as explanatory variable, 
-ssp.3 <- site[,c(2, 4, 5, 12, 16, 19)]
+ssp.3 <- site %>% 
+  dplyr::select(day, season, walk, species, broad.behavior, three.mesohabitat)
 #long abundance data
-ssp.3.long.frame <- site[,c(4, 5, 12)]
+ssp.3.long.frame <- site %>% 
+  dplyr::select(season, walk, species)
 ssp.3.long <- as.data.frame(table(ssp.3.long.frame))
 ssp.3.long$walk <- as.numeric(ssp.3.long$walk)
 ssp.3.long <- ssp.3.long %>% filter((season == "spring" & walk < 27) | (season == "summer" & walk > 26))
@@ -174,7 +181,8 @@ ssp.3.wide <- spread(ssp.3.long, species, Freq)
 
 ```{r, community season, warning=FALSE, echo=FALSE}
 #walks and species
-walks.ssp <- site[,c(4, 5, 12)] #pull season, walk, and species
+walks.ssp <- site %>% 
+  dplyr::select(season, walk, species)#pull season, walk, and species
 walks.ssp.long <-  as.data.frame(table(walks.ssp)) #get freq of each species in long table with walks as rep
 write.csv(walks.ssp.long,"~/Masters/Desert-Bird-Habitat-Use/output_data/walks.ssp.long.csv", row.names = FALSE) #write to csv
 walks.ssp.wide <- walks.ssp.long %>% spread(species, Freq) #get species into wide format
@@ -186,7 +194,8 @@ walks.ssp.wide$walk <- NULL #remove walks
 
 
 #season walks and species
-community.season <- site[,c(4, 5, 12)] #columns of interest
+community.season <- site %>% 
+  dplyr::select(season, walk, species) #columns of interest
 community.season.long <- as.data.frame(table(community.season)) #long with frequencies
 community.season.long$walk <- as.numeric(community.season.long$walk)
 community.season.wide <- community.season.long %>% spread(season, Freq) #incorrect
@@ -720,11 +729,11 @@ comm.dist
 ### Boxplots of Community Structure Metrics between Seasons
 
 ```{r, boxplots, echo=FALSE, warning=FALSE}
-shan.box <- ggplot(cov, aes(x=season, y=shannon, fill = season)) +
+shan.box <- ggplot(cov, aes(x=season, y=shannon, color = season, fill = season)) +
   geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme_classic(base_size=15) +
+  scale_color_brewer(palette = "Set1") +
+  scale_fill_manual(values=c("#DAF7A6", "#FFD156")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
   labs(y = "Shannon's Diversity", x=" ") +
@@ -732,11 +741,12 @@ shan.box <- ggplot(cov, aes(x=season, y=shannon, fill = season)) +
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 
-abun.box <- ggplot(cov, aes(x=season, y=abundance, fill = season)) +
+abun.box <- ggplot(cov, aes(x=season, y=abundance, color = season, fill = season)) +
   geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme_classic(base_size=15) +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#DAF7A6", "#FFD156")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
   labs(y = "Abundance", x=" ") +
@@ -744,23 +754,22 @@ abun.box <- ggplot(cov, aes(x=season, y=abundance, fill = season)) +
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 
-rich.box <- ggplot(cov, aes(x=season, y=richness, fill = season)) +
+rich.box <- ggplot(cov, aes(x=season, y=richness, color = season, fill = season)) +
   geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme_classic(base_size=15) +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#DAF7A6", "#FFD156")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
-  labs(y = "Richness", x = " ") +
-   theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank())
+  labs(y = "Richness") 
 
-simp.box <- ggplot(cov, aes(x=season, y=simpson, fill = season)) +
+simp.box <- ggplot(cov, aes(x=season, y=simpson, color = season, fill = season)) +
   geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme_classic(base_size=15) +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#DAF7A6", "#FFD156")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
   labs(y = "Simpson's Diversity", x = " ") +
@@ -768,20 +777,22 @@ simp.box <- ggplot(cov, aes(x=season, y=simpson, fill = season)) +
         axis.text.x=element_blank(),
         axis.ticks.x=element_blank())
 
-even.box <- ggplot(cov, aes(x=season, y=evenness, fill = season)) +
+even.box <- ggplot(cov, aes(x=season, y=evenness, color = season, fill = season)) +
   geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme_classic(base_size=15) +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#DAF7A6", "#FFD156")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
   labs(y = "Evenness")
 
-turn.box <- ggplot(cov, aes(x=season, y=turnover, fill = season)) +
+turn.box <- ggplot(cov, aes(x=season, y=turnover, color = season, fill = season)) +
   geom_boxplot() +
-  theme_classic() +
-  theme(axis.text.x = element_text(size=12)) +
-  scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
+  theme_classic(base_size=15) +
+  scale_color_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(size=15)) +
+  scale_fill_manual(values=c("#DAF7A6", "#FFD156")) +
   theme(legend.position="none") +
   theme(axis.title.x=element_blank()) +
   labs(y = "Turnover")
@@ -881,7 +892,7 @@ beha.ssp.bar <- ggplot(beha.ssp.summary, aes(x=behavior, y=mean, fill=rn, positi
 beha.ssp.bar
 
 
-ssp.bar <- ggarrange(meso.ssp.bar.3, meso.ssp.bar.2, beha.ssp.bar, nrow=3, ncol=1)
+ssp.bar <- ggarrange(meso.ssp.bar.3, beha.ssp.bar, nrow=1, ncol=2)
 ```
 
 ####Bar graphs of mesohabitat and behavior frequency trophic guild
@@ -974,7 +985,7 @@ beha.tro.bar <- ggplot(beha.tro.summary, aes(x=behavior, y=mean, fill=rn, positi
 beha.tro.bar
 
 
-tro.bar <- ggarrange(meso.tro.bar.3, meso.tro.bar.2, beha.tro.bar, nrow=3, ncol=1)
+tro.bar <- ggarrange(meso.tro.bar.3, beha.tro.bar, nrow=1, ncol=2)
 ```
 
 
@@ -1000,13 +1011,12 @@ meso.mig.bar.3 <- ggplot(meso.mig.summary.3, aes(x=mesohabitat, y=mean, fill=rn,
   geom_bar(stat = "summary", position = "dodge") +
   geom_errorbar(aes(ymin=0, ymax=mean+sd), position=position_dodge(.9), width = 0) +
   theme_classic() +
-  theme(legend.position = "none") +
+  theme(legend.title = element_blank()) +
   theme(axis.text.x = element_text(size=15)) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7")) +
   theme(axis.title.x=element_blank()) +
   theme(axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
   labs(title = "C", y=" ") +
-  theme(legend.title = element_blank()) +
   theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
 meso.mig.bar.3
 
@@ -1067,9 +1077,9 @@ beha.mig.bar <- ggplot(beha.mig.summary, aes(x=behavior, y=mean, fill=rn, positi
 beha.mig.bar
 
 
-mig.bar <- ggarrange(meso.mig.bar.3, meso.mig.bar.2, beha.mig.bar, nrow=3, ncol=1)
+mig.bar <- ggarrange(meso.mig.bar.3, beha.mig.bar, nrow=1, ncol=2)
 
-ssp.fun.bar <- ggarrange(ssp.bar, tro.bar, mig.bar, nrow=1, ncol=3)
+ssp.fun.bar <- ggarrange(ssp.bar, tro.bar, mig.bar, nrow=3, ncol=1)
 ssp.fun.bar
 ```
 
@@ -1094,10 +1104,11 @@ mos3 <- ggplot(data = cont) +
   geom_mosaic(aes(weight=Freq, x = product(Var2), fill = Var1)) +
   theme_classic() +
   theme(text = element_text(size=20), axis.text.x = element_text(angle = 60, hjust = .5, vjust = 0.5)) +
-  labs(title = "A", x = " ", y = "Mesohabitat") +
+  labs(x = " ", y = "Microhabitat") +
   theme(legend.title = element_blank()) +
   scale_fill_manual(values=c("#FFB64C", "#B1E7C7", "#F4CFF8")) +
   theme(panel.border = element_rect(colour = "black", fill = NA, size = 1))
+mos3
 
 #two-level mesohabitat
 mos2 <- ggplot(data = cont.2) +
@@ -1136,41 +1147,28 @@ shapiro.test(cov$simpson) #simpson is normal
 shapiro.test(cov$evenness) #evenness is normal
 shapiro.test(cov$turnover) #turnover is normal
 
-#means and sd's
-#abundance
-mean(cov$abundance)
-sd(cov$abundance)
-#richness
-mean(cov$richness)
-sd(cov$richness)
-#evenness
-mean(cov$evenness)
-sd(cov$evenness)
-#turnover
-cov <- cov %>% na.omit(cov$turnover)
-mean(cov$turnover)
-sd(cov$turnover)
-#shannon
-mean(cov$shannon)
-sd(cov$shannon)
-#simpson
-mean(cov$simpson)
-sd(cov$simpson)
+#means and standard errors
+library(sciplot) #for se
+aggregate(cov[, 3:8], list(cov$season), mean)
+aggregate(cov[, 3:8], list(cov$season), sciplot::se)
+
 
 
 #LMs and GLMs checking for differences between different community structure metrics
 #because there are only two predictor levels, we don't need to do post hoc tests
 
-abun.lm <- lm(abundance~season + (1|walk), data=cov) #lm for season's impact on abundance
-summary(abun.lm)
+abun.glm <- glm(abundance~season + (1|walk), data=cov, family="quasipoisson") #lm for season's impact on abundance
+dispersiontest(abun.glm) #overdispersed as poisson, must used quasipoisson
+summary(abun.glm)
 #abundance is significantly higher in spring than summer (p < 0.0001)
 
 shan.lm <- lm(shannon~season + (1|walk), data=cov) #lm for season's impact on shannon diversity
 summary(shan.lm)
 #shannon diversity indices are higher in spring than in summer(p < 0.0001)
 
-rich.glm <- lm(richness~season + (1|walk), data=cov, family="poisson")
+rich.glm <- glm(richness~season + (1|walk), data=cov, family="poisson")
 summary(rich.glm)
+dispersiontest(rich.glm) #poisson is correct not overdispersed
 #richness is higher in spring than in summer, but we need to check
 anova(rich.glm, test="Chisq")
 
@@ -1198,9 +1196,10 @@ First, we have to collapse our species data into principle components that can b
 
 #Principle Components analysis of spring species
 pca1 <- rda(ssp.spring, scale = FALSE)
+summary(pca1)
 
 #barplot of relative eigenvalues. This is the percentage variance explained by each axis
-barplot(as.vector(pca1$CA$eig)/sum(pca1$CA$eig)) 
+pca1bar <- barplot(as.vector(pca1$CA$eig)/sum(pca1$CA$eig)) 
 #we can see that 30% of variance is explained by eigenvector 1, ~18% by eigenvector 2, etc.
 
 #Calculate the percent of variance explained by first two, three, four, five, and six axes
@@ -1218,20 +1217,23 @@ plot(pca1, display = "species", type = "text")
 
 # In a biplot of a PCA, species' scores are drawn as arrows 
 # that point in the direction of increasing values for that variable
-biplot(pca1, choices = c(1,2), type = c("points"), xlim = c(-5,10)) # biplot of axis 1 vs 2
+biplot(pca1, choices = c(1,2), type = c("points", "text", "labels"), xlim = c(-5,10)) # biplot of axis 1 vs 2
 biplot(pca1, choices = c(1,3), type = c("points")) # biplot of axis 1 vs 3
 biplot(pca1, choices = c(1,4), type = c("points")) # biplot of axis 1 vs 4
 biplot(pca1, choices = c(1,6), type = c("point")) #biplot of axis 1 vs 6
 
 
+
 #Principle COmponents analysis of Summer species
 pca2 <- rda(ssp.summer, scale=FALSE)
+summary(pca2)
 
 #barplot of relative eigenvalues. This is the percentage variance explained by each axis
 barplot(as.vector(pca2$CA$eig)/sum(pca2$CA$eig)) 
 #we can see that 70% of variance is explained by eigenvector 1, ~20% by eigenvector 2, etc.
 
 #Calculate the percent of variance explained by first two, three, and four axes
+sum((as.vector(pca2$CA$eig)/sum(pca2$CA$eig))[1:1]) #65.81%
 sum((as.vector(pca2$CA$eig)/sum(pca2$CA$eig))[1:2]) #89.24%
 sum((as.vector(pca2$CA$eig)/sum(pca2$CA$eig))[1:3]) #93.25%
 #we really only needed 2 principle components to reach 80% threshold
