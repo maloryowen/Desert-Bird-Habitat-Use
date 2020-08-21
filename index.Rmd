@@ -37,7 +37,6 @@ Our response variables, behavior and mesohabitat, include:
 
 
 library(ggplot2)
-library(ggmap)
 library(dplyr)
 library(ggpubr)
 library(tidyverse)
@@ -52,9 +51,6 @@ library(data.table)
 library(MASS)
 library(chisq.posthoc.test)
 
-
-
-register_google(key="AIzaSyCxOqL_DUpsATBPdDa8HzpWdlIx_wHiSlk")
 
 
 ```
@@ -191,6 +187,7 @@ walks.ssp.wide <- filter(walks.ssp.wide, (season == "spring" & walk < 27) | (sea
 walks.ssp.wide$season <- NULL #remove season
 walks.ssp.wide$walk <- NULL #remove walks 
 #must remove factors so that we can calculate diversity metrics later
+write_csv(walks.ssp.wide, "~/Masters/Desert-Bird-Habitat-Use/data/species_wide.csv")
 
 
 #season walks and species
@@ -549,16 +546,82 @@ cont.su <- column_to_rownames(cont.su, var="Var2")
 # Viz
 
 ## Maps
+###Cali Map
+```{r, Calimap, warning=FALSE}
+library(ggmap)
+library(ggsn)
+library(ggsn)
+register_google(key="AIzaSyCxOqL_DUpsATBPdDa8HzpWdlIx_wHiSlk")
+lat <- 34.78
+lon <- -115.66
+point <- 1
+granites <- data.frame(point, lat, lon)
 
-```{r, map, warning=FALSE}
-#map of all bird sitings
-deep.sunset <- get_map(location = c(lon = -115.663, lat = 34.7805), zoom = 17, color="bw")
+#california map
+cali <- get_map(location = c(lon = -116, lat = 35), zoom = 6, maptype = "terrain", source = 'stamen')
+cali <- ggmap(cali) +
+scalebar(x.min = -122, x.max = -111,
+                   y.min = 30, y.max = 41,
+                   dist = 200, dist_unit = "km",
+                   st.bottom = FALSE, st.color = "black",
+             transform = TRUE, model = "WGS84") 
 
-site.wide.map <- ggmap(deep.sunset)
+cali <- cali +
+  geom_point(data = granites, aes(x=lon, y=lat), size = 5) +
+  labs(title = "California") 
+cali
+
+
+
+
+?get_stamenmap
+
+#map of all bird sightings
+deep.sunset <- get_map(location = c(lon = -115.663, lat = 34.7808), zoom = 17, maptype = "satellite", source = "google")
+
+site.wide.map <- ggmap(deep.sunset) 
+
 site.wide.map <- site.wide.map +
   geom_point(data=site, aes(x=lon, y=lat, colour = order, group = order), alpha = 3/10, size =4) +
-  labs(title = "Site Wide Species Observations", x = "longitude", y = "latitude", color = "Order")
+  labs(title = "Site Wide Species Observations", color = "Order")
+
 site.wide.map
+```
+
+###Mojave Preserve Map
+```{r}
+library(sf)
+mymap <- st_read("~/Masters/Desert-Bird-Habitat-Use/data/moja_tracts/MOJA_boundary.shp")
+mymap_3857 <- st_transform(mymap, 3857) #Transform nc to EPSG 3857 (Pseudo-Mercator, what Google uses)
+
+map <- get_map(location = c(lon = -116, lat = 35), zoom = 8, maptype = 'terrain', source = 'stamen')
+ggmap_bbox <- function(map){
+  if (!inherits(map, "ggmap")) stop("map must be a ggmap object")
+  # Extract the bounding box (in lat/lon) from the ggmap to a numeric vector, 
+  # and set the names to what sf::st_bbox expects:
+  map_bbox <- setNames(unlist(attr(map, "bb")), 
+                       c("ymin", "xmin", "ymax", "xmax"))
+ # Coonvert the bbox to an sf polygon, transform it to 3857, 
+  # and convert back to a bbox (convoluted, but it works)
+  bbox_3857 <- st_bbox(st_transform(st_as_sfc(st_bbox(map_bbox, crs = 4326)), 3857))
+
+  # Overwrite the bbox of the ggmap object with the transformed coordinates 
+  attr(map, "bb")$ll.lat <- bbox_3857["ymin"]
+  attr(map, "bb")$ll.lon <- bbox_3857["xmin"]
+  attr(map, "bb")$ur.lat <- bbox_3857["ymax"]
+  attr(map, "bb")$ur.lon <- bbox_3857["xmax"]
+  map
+} 
+
+map <- ggmap_bbox(map) 
+
+
+ggmap(map) + 
+  coord_sf(crs = st_crs(3857)) + # force the ggplot2 map to be in 3857
+  geom_sf(data = mymap_3857, inherit.aes = FALSE) 
+
+
+
 ```
 
 

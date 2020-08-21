@@ -24,6 +24,7 @@ Predictions:
 ```{r, Data, warning=FALSE, include=FALSE, echo=FALSE}
 library(tidyverse)
 library(lubridate)
+library(vegan)
 data <- read_csv("~/Masters/Desert-Bird-Habitat-Use/data/line_transects_viz.csv")
 tidy_data <- data %>%
   rename(rep = bird.id, survey = walk, long = lon, migratory_class = migratory.class, guild = trophic.guild, behavior_simple = broad.behavior, microhabitat = three.mesohabitat) %>%
@@ -37,6 +38,7 @@ tidy_data <- tidy_data %>%
   mutate(microhabitat = case_when(microhabitat == "other" ~ "open", TRUE ~ as.character(microhabitat)))
 write_csv(tidy_data, "~/Masters/Desert-Bird-Habitat-Use/data/tidy_data.csv")
 
+
 #weather data
 weather <- read_csv("~/Masters/Desert-Bird-Habitat-Use/weather/weather.csv") %>% 
   select(month.day.hour, Air.Temperature.Mean.Deg.F)
@@ -44,6 +46,12 @@ weather <- read_csv("~/Masters/Desert-Bird-Habitat-Use/weather/weather.csv") %>%
 #join mean air temperature for the hour to tidy data
 tidy_data <- left_join(tidy_data, weather, by = 'month.day.hour') %>% 
   rename(temp = Air.Temperature.Mean.Deg.F)
+
+#tidydata without BTSP
+tidy_data_noBTSP <- tidy_data %>%
+  select(rep, date, season, day, survey, microhabitat, family, species, migratory_class, guild, behavior_simple, temp) %>%
+  mutate(microhabitat = case_when(microhabitat == "other" ~ "open", TRUE ~ as.character(microhabitat))) %>% 
+  filter(species != "Black.throated Sparrow")
 
 #taxanomic model datasets
   
@@ -59,6 +67,24 @@ data_behavior <- tidy_data %>%
   group_by(season, survey, microhabitat, behavior_simple, temp) %>%
   summarise(totals = n())
 
+
+div <- tidy_data %>% 
+  dplyr::select(season, survey, microhabitat, species)#pull season, walk, microhabitat, and species
+div_long <-  as.data.frame(table(div)) #get freq of each species in long table with walks as rep
+div_wide <- div_long %>% spread(species, Freq) #get species into wide format
+div_wide$survey <- as.numeric(div_wide$survey) #make walks numeric
+div_wide <- filter(div_wide, (season == "spring" & survey < 27) | (season == "summer" & survey > 26))
+data_div <- as.data.frame(diversity(div_wide[,4:45])) %>% 
+  rename(Shannon = "diversity(div_wide[, 4:45])")
+data_wide <- div_wide %>% dplyr::select(season, survey, microhabitat)
+data_div <- bind_cols(data_wide, data_div) 
+weather_survey <- tidy_data %>% dplyr::select(survey, temp)
+weather_survey <- aggregate(temp~survey, weather_survey, FUN=mean)
+  
+data_div <- left_join(data_div, weather_survey, by = "survey")
+
+
+
 #trophic guild model dataset
 data_trophic <- tidy_data %>% 
   group_by(season, survey, microhabitat, guild, temp) %>% 
@@ -73,87 +99,153 @@ data_migratory <- tidy_data %>%
   filter(migratory_class != "unknown")
 
 
-#Black-throated Sparrow
+#Black-throated Sparrow only
 data_sparrow <- tidy_data %>%
   group_by(season, survey, microhabitat, species, behavior_simple, temp) %>%
   summarise(counts = n()) %>% 
   filter(species == "Black.throated Sparrow")
+
+#Black-throated Sparrow excluded
+data_species_noBTSP <- tidy_data_noBTSP %>%
+  group_by(season, survey, microhabitat, species, temp) %>%
+  summarise(counts = n()) 
+
+data_richness_noBTSP <- data_species_noBTSP %>%
+  group_by(season, survey, microhabitat, temp) %>%
+  summarise(richness = n())
+
+data_behavior_noBTSP <- tidy_data_noBTSP %>%
+  group_by(season, survey, microhabitat, behavior_simple, temp) %>%
+  summarise(totals = n())
+
+div_long_noBTSP <-  as.data.frame(table(div)) %>% 
+  filter(species != "Black.throated Sparrow") #get freq of each species in long table with walks as rep
+div_wide_noBTSP <- div_long_noBTSP %>% spread(species, Freq) #get species into wide format
+div_wide_noBTSP$survey <- as.numeric(div_wide_noBTSP$survey) #make walks numeric
+div_wide_noBTSP <- filter(div_wide_noBTSP, (season == "spring" & survey < 27) | (season == "summer" & survey > 26))
+data_div_noBTSP <- as.data.frame(diversity(div_wide_noBTSP[,4:45])) %>% 
+  rename(Shannon = "diversity(div_wide_noBTSP[, 4:45])")
+div_wide_noBTSP <- div_wide_noBTSP %>% dplyr::select(season, survey, microhabitat)
+data_div_noBTSP <- bind_cols(div_wide_noBTSP, data_div_noBTSP)
+data_div_noBTSP <- left_join(data_div_noBTSP, weather_survey, by = "survey")
+
+
 
 ```
 
 
 #Viz
 ```{r}
-box1 <- ggplot(data_species, aes(season, counts, color = microhabitat, fill = microhabitat)) +
-  geom_boxplot() +
-  scale_color_brewer(palette = "Set1") +
-  scale_fill_manual(values=c("#DAF7A6", "#FFD156", "#CF92D5")) +
+library(ggpubr)
+
+box1 <- ggplot(data_species, aes(season, counts, color = microhabitat)) +
+  geom_boxplot(aes(fill = microhabitat)) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_color_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
   labs(y = "Species Abundance", x= " ", title = "A") +
   theme_classic(base_size = 15) +
   theme(legend.position = "none") +
-  theme(axis.text=element_text(size=15))
+  theme(axis.text=element_text(size=15)) +
+  stat_summary(fun=mean, colour="#E77272", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
 
-box2 <- ggplot(data_species, aes(season, counts, color = microhabitat)) +
-  geom_jitter() +
-  scale_color_brewer(palette = "Set1") +
-  labs(y = "abundance") +
-  facet_wrap(~species) +
-  labs(y = "abundance")
-
-box3 <- ggplot(data_richness, aes(season, richness, color = microhabitat, fill = microhabitat)) +
-  geom_boxplot() +
-  scale_fill_manual(values=c("#DAF7A6", "#FFD156", "#CF92D5")) +
-  scale_color_brewer(palette = "Set1") +
+box2 <- ggplot(data_richness, aes(season, richness, color = microhabitat)) +
+  geom_boxplot(aes(fill = microhabitat)) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_color_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
   labs(y="Species Richness", x=" ", title = "B") +
   theme_classic(base_size = 15) +
   theme(legend.title = element_blank()) +
-  theme(axis.text = element_text(size=15))
+  theme(axis.text = element_text(size=15)) +
+  theme(legend.position = "none") +
+  stat_summary(fun=mean, colour="#E77272", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
 
+box3 <- ggplot (data_div, aes(season, Shannon, color = microhabitat)) +
+  geom_boxplot(aes(fill=microhabitat)) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_color_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
+  labs(y="Shannon Weaver Index", x=" ", title = "C") +
+  theme_classic(base_size = 15) +
+  theme(legend.title = element_blank()) +
+  theme(legend.position = "none") +
+  theme(axis.text = element_text(size=15)) +
+  stat_summary(fun=mean, colour="#E77272", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
 
-ggarrange(box1, box3, ncol=1, nrow=2)
-
-
-box4 <- ggplot(data_behavior, aes(season, totals, color = microhabitat, fill = microhabitat)) +
-  geom_boxplot() +
-  scale_color_brewer(palette = "Set1") +
-  scale_fill_manual(values=c("#DAF7A6", "#FFD156", "#CF92D5")) +
-  facet_wrap(~behavior_simple, ncol = 2) +
+box4 <- ggplot(data_behavior, aes(behavior_simple, totals, color = microhabitat)) +
+  geom_boxplot(aes(fill=microhabitat)) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_colour_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
+  facet_wrap(~season, ncol = 2) +
   labs(y = "Species Frequency", x = " ") +
   theme_classic(base_size = 15) +
   theme(legend.position = "bottom") +
-  theme(axis.text = element_text(size=15))
+  theme(axis.text.x = element_text(angle = 90)) +
+  theme(axis.text = element_text(size=15)) +
+  stat_summary(fun=mean, colour="#E77272", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
 box4
 
-box5 <- ggplot(data_trophic, aes(season, counts, color = microhabitat, fill = microhabitat)) +
-  geom_boxplot() +
-  scale_color_brewer(palette = "Set1") +
-  scale_fill_manual(values=c("#DAF7A6", "#FFD156", "#CF92D5")) +
-  labs(y = "Trophic Guild Abundance", x= " ", title = "A") +
+box5 <- ggplot(data_trophic, aes(season, counts, color = microhabitat)) +
+  geom_boxplot(aes(fill=microhabitat)) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_colour_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
+  labs(y = "Trophic Guild Abundance", x= " ", title = "D") +
   theme_classic(base_size = 15) +
   theme(legend.position = "none") +
-  theme(axis.text = element_text(size=15))
+  theme(axis.text = element_text(size=15)) +
+  stat_summary(fun=mean, colour="#E77272", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
 
-box6 <- ggplot(data_migratory, aes(season, counts, color = microhabitat, fill = microhabitat)) +
-  geom_boxplot() +
-  scale_fill_manual(values=c("#DAF7A6", "#FFD156", "#CF92D5")) +
-  scale_color_brewer(palette = "Set1") +
-  labs(y="Migratory Class Abundance", x="Season", title = "B") +
+
+box6 <- ggplot(data_migratory, aes(season, counts, color = microhabitat)) +
+  geom_boxplot(aes(fill=microhabitat)) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_colour_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
+  labs(y="Migratory Class Abundance", x="Season", title = "E") +
   theme_classic(base_size = 15) +
   theme(legend.title = element_blank()) +
-  theme(axis.text = element_text(size=15))
+  theme(axis.text = element_text(size=15)) +
+  stat_summary(fun=mean, colour="#E77272", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
 
-ggarrange(box5, box6, ncol=1, nrow=2)
+ggarrange(box1, box2, box3, box5, box6, ncol=3, nrow=2)
 
-sparrow <- ggplot(data_sparrow, aes(season, counts, color = microhabitat, fill = microhabitat)) +
-  geom_boxplot() +
-  scale_color_brewer(palette = "Set1") +
-  scale_fill_manual(values=c("#DAF7A6", "#FFD156", "#CF92D5")) +
+
+
+sparrow <- ggplot(data_sparrow, aes(season, counts, color = microhabitat)) +
+  geom_boxplot(lwd=1.5) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_colour_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
   labs(y="BTSP Abundance", x= "Season") +
   facet_wrap(~behavior_simple, ncol=2) +
   theme_classic(base_size = 15) +
   theme(legend.title = element_blank()) +
-  theme(axis.text = element_text(size=15))
+  theme(axis.text = element_text(size=15)) +
+  stat_summary(fun=mean, colour="black", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
+
+nosparrow <- ggplot(data_species_noBTSP, aes(season, counts, color = microhabitat)) +
+  geom_boxplot(lwd=1.5) +
+  scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  scale_colour_manual(values=c("#6E6E6E", "#6E6E6E", "#6E6E6E")) +
+  labs(y="BTSP exclusion Species Abundance", x= "Season") +
+  theme_classic(base_size = 15) +
+  theme(legend.title = element_blank()) +
+  theme(axis.text = element_text(size=15)) +
+  stat_summary(fun=mean, colour="black", aes(group=microhabitat), geom="point", shape=18, size=3, position=position_dodge(.75))
+nosparrow
 sparrow
+
+ggarrange(box1, box2, box3, box5, box6, ncol=3, row = 2)
+
+
+
+
+#species stacked barchart
+ggplot(data_species, aes(fill=microhabitat, y=counts, x=species)) + 
+  geom_bar(position="fill", stat="identity") +
+    scale_fill_manual(values=c("#D5E5A8", "#A8E5D6", "#B8A8E5")) +
+  facet_wrap(~season) +
+  theme_classic() +
+  coord_flip() +
+  labs(y="Percent Abundance", x="Species") +
+  theme(legend.title = element_blank())
+  
 
 ```
 
@@ -165,12 +257,16 @@ sparrow
 ```{r}
 library(emmeans)
 library(AER)
+library(stats)
 
+options(max.print = 99999999)
 
 m1a <- glm(counts~microhabitat*season + (1 |survey) + (1|temp), family = quasipoisson, data = data_species)
 anova(m1a, test = "Chisq")
+aov(m1a)
 summary(m1a) #not overdispersed when quasipoisson
 dispersiontest(m1a, trafo=1) #overdispersed as poisson
+anova(m1a)
 
 c1a <- emmeans(m1a, pairwise~microhabitat*season)
 c1a
@@ -182,12 +278,30 @@ anova(m1b, test = "Chisq")
 c1b <- emmeans(m1b, pairwise~species*microhabitat*season)
 c1b
 
+
+m1c <- glm(counts~microhabitat*season + (1 |survey) + (1|temp), family = quasipoisson, data = data_species_noBTSP)
+anova(m1c, test = "Chisq")
+summary(m1c) #not overdispersed when quasipoisson
+
+c1c <- emmeans(m1c, pairwise~microhabitat*season)
+c1c
+
+
 m2 <- glm(richness~microhabitat*season + (1 |survey) + (1|temp), family = gaussian, data = data_richness)
 anova(m2, test = "Chisq")
 summary(m2) #not overdispered as gaussian
+aov(m2)
 
 c2 <- emmeans(m2, pairwise~microhabitat*season)
 c2
+
+
+m2b <- glm(richness~microhabitat*season + (1 |survey) + (1|temp), family = quasipoisson, data = data_richness_noBTSP)
+anova(m2b, test = "Chisq")
+summary(m2b) #not overdispered as quasipoisson
+
+c2b <- emmeans(m2b, pairwise~microhabitat*season)
+c2b
 
 
 m3 <- glm(totals~microhabitat*behavior_simple + (1|survey) + (temp), family = quasipoisson, data = data_behavior)
@@ -199,7 +313,7 @@ c3
 
 m3b <- glm(totals~microhabitat*season*behavior_simple + (1|survey) + (1|temp), family = quasipoisson, data = data_behavior)
 summary(m3b) #not overdispersed as quasipoisson
-anova(m3, test = "Chisq")
+anova(m3b, test = "Chisq")
 
 c3b <- emmeans(m3b, pairwise~microhabitat*season*behavior_simple)
 c3b
@@ -244,6 +358,22 @@ anova(m6, test = "Chisq")
 
 c6 <- emmeans(m6, pairwise~microhabitat*season*behavior_simple)
 c6
+
+
+#Diversity
+m7a <- glm(Shannon~microhabitat*season + (1|survey) + (1|temp), family = quasipoisson, data = data_div)
+anova(m7a, test = "Chisq")
+summary(m7a) #not overdispered as quasipoisson
+
+c7a <- emmeans(m7a, pairwise~microhabitat*season)
+c7a
+
+m7b <- glm(Shannon~microhabitat*season + (1|survey) + (1|temp), family = quasipoisson, data = data_div_noBTSP)
+anova(m7b, test = "Chisq")
+summary(m7b) #not overdispered as quasipoisson
+
+c7b <- emmeans(m7b, pairwise~microhabitat*season)
+c7b
 
 
 ```
